@@ -1,6 +1,7 @@
 package com.example.naijaWallet.email;
 
 import com.example.naijaWallet.config.BrevoProperties;
+import com.example.naijaWallet.enumTypes.TransactionStatus;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,9 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -21,13 +25,6 @@ public class EmailService {
     private final WebClient webClient;
 
     private final BrevoProperties brevoProperties;
-
-    @PostConstruct
-    public void init() {
-        System.out.println("Brevo API Key: " + brevoProperties.getApiKey());
-        System.out.println("Sender Email: " + brevoProperties.getSenderEmail());
-        System.out.println("Sender Name: " + brevoProperties.getSenderName());
-    }
 
     public void sendEmail(String to, String subject, String body) {
         Objects.requireNonNull(to, "Recipient email cannot be null");
@@ -79,6 +76,187 @@ public class EmailService {
 
                 This link expires in 24 hours.
                 """.formatted(verificationLink);
+
+        sendEmail(email, subject, body);
+    }
+
+    public void sendWalletDetails(
+            String email,
+            String accountNumber,
+            BigDecimal balance,
+            String currency
+    ) {
+        String subject = "Email Verification Successful!";
+
+        String body = """
+                      Your Wallet is now active.
+                     \s
+                      Wallet information:
+                      Account Number: %s
+                      Available Balance: %s %s
+                     \s
+                      You can now:
+                      Deposit funds
+                      Transfer money
+                      View transaction history
+                     \s
+                      Welcome aboard!\s
+                     \s
+                      NaijaWallet Team
+                     \s""".formatted(accountNumber, balance, currency);
+
+        sendEmail(email, subject, body);
+    }
+
+    public void sendDepositAlert(
+            String email,
+            UUID transactionId,
+            String accountNumber,
+            BigDecimal amount,
+            String currency,
+            String transactionReference,
+            TransactionStatus status,
+            LocalDateTime createdAt,
+            BigDecimal balance
+    ) {
+
+        String subject = "NaijaWallet Deposit Alert";
+
+        String body = """
+            Dear Customer,
+
+            A deposit has been received into your wallet.
+
+            Deposit Details
+            ------------------------------
+            Transaction ID: %s
+            Account Number: %s
+            Amount: %s %s
+            Transaction Reference: %s
+            Status: %s
+            Date: %s
+
+            Current Wallet Balance
+            ------------------------------
+            Balance: %s %s
+
+            Thank you for using NaijaWallet.
+
+            NaijaWallet Team
+            """
+                .formatted(
+                        transactionId,
+                        accountNumber,
+                        currency,
+                        amount,
+                        transactionReference,
+                        status,
+                        createdAt,
+                        currency,
+                        balance
+                );
+
+        sendEmail(email, subject, body);
+    }
+
+    public void sendCreditAlert(
+            String email,
+            UUID transactionId,
+            String accountNumber,
+            BigDecimal amount,
+            String currency,
+            String transactionReference,
+            LocalDateTime createdAt,
+            BigDecimal balance
+    ) {
+
+        String subject = "NaijaWallet Credit Alert";
+
+        String body = """
+            Dear Customer,
+
+            A credit has been received into your wallet.
+
+            Credit Details
+            ------------------------------
+            Transaction ID: %s
+            Account Number: %s
+            Amount: %s %s
+            Transaction Reference: %s
+            Date: %s
+
+            Current Wallet Balance
+            ------------------------------
+            Balance: %s %s
+
+            Thank you for using NaijaWallet.
+
+            NaijaWallet Team
+            """
+                .formatted(
+                        transactionId,
+                        accountNumber,
+                        currency,
+                        amount,
+                        transactionReference,
+                        createdAt,
+                        currency,
+                        balance
+                );
+
+        sendEmail(email, subject, body);
+    }
+
+    public void sendDebitAlert(
+            String email,
+            UUID transactionId,
+            String accountNumber,
+            String recipient,
+            BigDecimal amount,
+            String currency,
+            TransactionStatus status,
+            String transactionReference,
+            LocalDateTime createdAt,
+            BigDecimal balance
+    ) {
+
+        String subject = "NaijaWallet Debit Alert";
+
+        String body = """
+            Dear Customer,
+
+            Funds have been debited from your wallet.
+
+            Transaction Details
+            ------------------------------
+            Transaction ID: %s
+            Account Number: %s
+            Recipient Account: %s
+            Amount: %s %s
+            Transaction Reference: %s
+            Status: %s
+            Date: %s
+
+            Current Wallet Balance
+            ------------------------------
+            Balance: %s %s
+
+            Thank you for using NaijaWallet.
+
+            NaijaWallet Team
+            """
+                .formatted(
+                        transactionId,
+                        accountNumber,
+                        recipient,
+                        currency,
+                        amount,
+                        transactionReference,
+                        status,
+                        createdAt,
+                        currency,
+                        balance
+                );
 
         sendEmail(email, subject, body);
     }

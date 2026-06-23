@@ -9,10 +9,17 @@ import com.example.naijaWallet.transaction.Transaction;
 import com.example.naijaWallet.transaction.TransactionRepo;
 import com.example.naijaWallet.transaction.TransactionService;
 import com.example.naijaWallet.userAccount.UserAccount;
+import com.example.naijaWallet.userEvent.DebitAlertEvent;
+import com.example.naijaWallet.userEvent.DepositAlertEvent;
+import com.example.naijaWallet.wallet.Wallet;
 import com.example.naijaWallet.wallet.WalletMapper;
 import com.example.naijaWallet.wallet.WalletRepo;
+import com.example.naijaWallet.wallet.WalletService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +38,7 @@ public class DepositService {
     private final DepositRepo depositRepo;
     private final TransactionRepo transactionRepo;
     private final WalletRepo walletRepo;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public DepositResponse fund(UserAccount userAccount, DepositRequest request) {
@@ -47,6 +55,11 @@ public class DepositService {
         if (updatedRows == 0) {
             throw new NotFound("Wallet not found");
         }
+
+        //  ensure correct balance in memory
+        Wallet wallet = walletRepo.findById(
+                userAccount.getWallet().getId()
+        ).orElseThrow(() -> new NotFound("Wallet not found"));
 
         String depositReference  = TransactionService.generateTransactionReference();
 
@@ -66,7 +79,7 @@ public class DepositService {
         transaction.setTransactionReference(depositReference);
         transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setCreatedAt(LocalDateTime.now());
-        transaction.setWallet(userAccount.getWallet());
+        transaction.setWallet(wallet);
 
 //        Wallet wallet =
 //                walletRepo.findByUserAccount(userAccount)
@@ -75,6 +88,18 @@ public class DepositService {
         transactionRepo.save(transaction);
 
         log.info("Deposit {} completed successfully", depositReference);
+
+        eventPublisher.publishEvent(new DepositAlertEvent(
+                userAccount.getEmail(),
+                transaction.getId(),
+                WalletService.maskAccountNumber(wallet.getAccountNumber()),
+                transaction.getAmount(),
+                wallet.getCurrency(),
+                transaction.getTransactionReference(),
+                transaction.getStatus(),
+                transaction.getCreatedAt(),
+                wallet.getBalance()
+        ));
 
         return new DepositResponse(
                 deposit.getId(),

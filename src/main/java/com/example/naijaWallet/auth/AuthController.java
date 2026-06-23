@@ -25,12 +25,12 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/verification/{tokenValue}")
-    public ResponseEntity<String> verify(
-            @PathVariable String tokenValue
+    @GetMapping("/verify-email")
+    public ResponseEntity<VerificationResponse> verify(
+            @RequestParam String token
     ) {
-        authService.VerifyEmail(tokenValue);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Email verified successfully");
+        VerificationResponse response = authService.verifyEmail(token);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")

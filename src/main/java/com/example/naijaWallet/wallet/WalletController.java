@@ -26,11 +26,12 @@ public class WalletController {
     private final WalletService walletService;
     private final TransactionService transactionService;
 
-    @GetMapping("/{walletId}")
+    @GetMapping("/mywallet")
     public ResponseEntity<WalletResponse> getWallet(
-            @PathVariable UUID walletId
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        WalletResponse response = walletService.getWallet(walletId);
+        UserAccount userAccount = userPrincipal.getUser();
+        WalletResponse response = walletService.getMyWallet(userAccount);
 
         return  ResponseEntity.status(HttpStatus.OK).body(response);
     }

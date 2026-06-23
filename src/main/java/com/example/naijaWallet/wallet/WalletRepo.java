@@ -15,8 +15,8 @@ import java.util.UUID;
 @Repository
 public interface WalletRepo extends JpaRepository<Wallet, UUID> {
 
-    // Atomic sql preventing race condition
-    @Modifying
+    // Atomic sql deposit preventing race condition (read, modify, write)
+    @Modifying(clearAutomatically = true, flushAutomatically = true) // clears stale values after deposit
     @Transactional
     @Query("""
         update Wallet w\s
@@ -29,20 +29,23 @@ public interface WalletRepo extends JpaRepository<Wallet, UUID> {
             @Param("amount") BigDecimal amount
     );
 
-    @Modifying
+    // Atomic sql debit preventing race condition (read, modify, write)
+    @Modifying(clearAutomatically = true, flushAutomatically = true) // clears stale values after debit
     @Transactional
     @Query("""
         update Wallet w\s
         set w.balance = w.balance - :amount,
             w.updatedAt = current_timestamp\s
         where w.userAccount = :userAccount
+        and w.balance >= :amount
        \s""")
-    void debitWallet(
+    int debitWallet(
             @Param("userAccount") UserAccount userAccount,
             @Param("amount")BigDecimal amount
     );
 
-    @Modifying
+    // Atomic sql credit preventing race condition (read, modify, write)
+    @Modifying(clearAutomatically = true, flushAutomatically = true) // clears stale values after credit
     @Transactional
     @Query("""
         update Wallet w\s
@@ -50,10 +53,18 @@ public interface WalletRepo extends JpaRepository<Wallet, UUID> {
             w.updatedAt = current_timestamp\s
         where w.id = :walletId
        \s""")
-    void creditWallet(
+    int creditWallet(
             @Param("walletId") UUID toWalletId,
             @Param("amount")BigDecimal amount
     );
+
+    // getting the correct updated wallet balance
+    @Query("""
+        select w.balance
+        from Wallet w
+        where w.id = :walletId
+    """)
+    BigDecimal findBalanceById(@Param("walletId") UUID walletId);
 
     Optional<Wallet> findByAccountNumber(String accountNumber);
 }

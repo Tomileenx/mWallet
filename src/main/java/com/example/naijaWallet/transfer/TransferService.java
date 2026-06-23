@@ -10,10 +10,16 @@ import com.example.naijaWallet.transaction.Transaction;
 import com.example.naijaWallet.transaction.TransactionRepo;
 import com.example.naijaWallet.transaction.TransactionService;
 import com.example.naijaWallet.userAccount.UserAccount;
+import com.example.naijaWallet.userEvent.CreditAlertEvent;
+import com.example.naijaWallet.userEvent.DebitAlertEvent;
 import com.example.naijaWallet.wallet.Wallet;
 import com.example.naijaWallet.wallet.WalletRepo;
+import com.example.naijaWallet.wallet.WalletService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +39,7 @@ public class TransferService {
     private final TransferRepo transferRepo;
     private final TransactionRepo transactionRepo;
     private final WalletRepo walletRepo;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public TransferResponse transferMoney(
@@ -52,14 +59,26 @@ public class TransferService {
             throw new BadRequest("Cannot transfer to the same wallet");
         }
 
-        if (sender.getBalance().compareTo(request.amount()) < 0) {
+        String transferReference  = TransactionService.generateTransactionReference();
+
+        int debitRows = walletRepo.debitWallet(userAccount, request.amount());
+        if (debitRows == 0) {
             throw new BadRequest("Insufficient Balance");
         }
 
-        String transferReference  = TransactionService.generateTransactionReference();
+        int creditRows = walletRepo.creditWallet(receiver.getId(), request.amount());
 
-        walletRepo.debitWallet(userAccount, request.amount());
-        walletRepo.creditWallet(receiver.getId(), request.amount());
+        if (creditRows == 0) {
+            throw new BadRequest("Wallet not found");
+        }
+
+        //  ensure correct balance in memory
+        BigDecimal senderBalance =
+                walletRepo.findBalanceById(sender.getId());
+
+        BigDecimal receiverBalance =
+                walletRepo.findBalanceById(receiver.getId());
+
 
         log.info("Initiating transfer of {} from wallet {} to {}",
                 request.amount(),
@@ -76,7 +95,6 @@ public class TransferService {
         transfer.setCreatedAt(LocalDateTime.now());
 
         transferRepo.save(transfer);
-
 
         Transaction debitEntry = new Transaction();
         debitEntry.setWallet(sender);
@@ -104,6 +122,33 @@ public class TransferService {
                 "Transfer completed successfully {}",
                 transferReference
         );
+
+        log.info("Debit event balance: {}", senderBalance);
+        eventPublisher.publishEvent(new DebitAlertEvent(
+                userAccount.getEmail(),
+                debitEntry.getId(),
+                WalletService.maskAccountNumber(sender.getAccountNumber()),
+                debitEntry.getAmount(),
+                sender.getCurrency(),
+                receiver.getUserAccount().getFullName(),
+                debitEntry.getTransactionReference(),
+                debitEntry.getStatus(),
+                debitEntry.getCreatedAt(),
+                senderBalance
+        ));
+
+
+        log.info("Credit event balance: {}", receiverBalance);
+        eventPublisher.publishEvent(new CreditAlertEvent(
+                receiver.getUserAccount().getEmail(),
+                creditEntry.getId(),
+                WalletService.maskAccountNumber(receiver.getAccountNumber()),
+                creditEntry.getAmount(),
+                receiver.getCurrency(),
+                creditEntry.getTransactionReference(),
+                creditEntry.getCreatedAt(),
+                receiverBalance
+        ));
 
         return new TransferResponse(
                 transfer.getId(),

@@ -13,12 +13,14 @@ import com.example.naijaWallet.userAccount.UserMapper;
 import com.example.naijaWallet.userAccount.UserRepo;
 import com.example.naijaWallet.userAccount.UserResponse;
 import com.example.naijaWallet.userEvent.UserCreatedEvent;
+import com.example.naijaWallet.userEvent.WalletEvent;
 import com.example.naijaWallet.util.VerificationToken;
 import com.example.naijaWallet.util.VerificationTokenRepo;
 import com.example.naijaWallet.wallet.Wallet;
 import com.example.naijaWallet.wallet.WalletRepo;
 import com.example.naijaWallet.wallet.WalletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,6 +36,7 @@ import java.util.UUID;
 
 @AllArgsConstructor
 @Service
+@Slf4j
 public class AuthService {
 
     private final UserRepo repo;
@@ -73,7 +76,6 @@ public class AuthService {
 
         eventPublisher.publishEvent(new UserCreatedEvent(user.getEmail(), verificationToken));
 
-
         return new UserResponse(
                 user.getId(),
                 user.getFullName(),
@@ -84,7 +86,9 @@ public class AuthService {
         );
     }
 
-    public void VerifyEmail(String tokenValue) {
+    @Transactional
+    public VerificationResponse verifyEmail(String tokenValue) {
+
         VerificationToken token = verificationTokenRepo.findByToken(tokenValue)
                 .orElseThrow(() -> new NotFound("Invalid token"));
 
@@ -94,45 +98,75 @@ public class AuthService {
 
         UserAccount user = token.getUserAccount();
 
-        if (!user.isVerified()) {
-            user.setVerified(true);
-            createWallet(user);
-
-            repo.save(user);
+        if (user.isVerified()) {
+            throw new BadRequest("Email already verified");
         }
+
+        user.setVerified(true);
+
+        // Wallet creation upon email verification
+        Wallet wallet = createWallet(user);
+
+        repo.save(user);
 
         verificationTokenRepo.delete(token);
+
+        log.info("Publishing WalletEvent");
+
+        eventPublisher.publishEvent(
+                new WalletEvent(
+                        user.getEmail(),
+                        wallet.getAccountNumber(),
+                        wallet.getBalance(),
+                        wallet.getCurrency()
+                )
+        );
+
+        return  new VerificationResponse(
+                "Email verification successful",
+                new WalletResponse(
+                        wallet.getId(),
+                        wallet.getAccountNumber(),
+                        wallet.getBalance(),
+                        wallet.getCurrency()
+                )
+        );
     }
 
-    public void createWallet(UserAccount user) {
-        if (user.getRole() == Role.USER) {
+    public Wallet createWallet(UserAccount user) {
+        if (user.getRole() != Role.USER) {
+            throw new IllegalStateException("Only users can have wallets");
+        }
 
-            Wallet wallet = new Wallet();
-            wallet.setUserAccount(user);
-            wallet.setBalance(BigDecimal.ZERO);
-            wallet.setCurrency("NGN");
-            wallet.setCreatedAt(LocalDateTime.now());
-            wallet.setUpdatedAt(LocalDateTime.now());
+        Wallet wallet = new Wallet();
+        wallet.setUserAccount(user);
+        wallet.setBalance(BigDecimal.ZERO);
+        wallet.setCurrency("NGN");
+        wallet.setCreatedAt(LocalDateTime.now());
+        wallet.setUpdatedAt(LocalDateTime.now());
 
-            boolean saved = false;
-            int attempts = 0;
+        boolean saved = false;
+        int attempts = 0;
 
-            // Race condition check
-            while (!saved && attempts < 3) {
-                try {
-                    wallet.setAccountNumber(generateAccountNumber());
-                    walletRepo.save(wallet);
-                    saved = true;
-                } catch (DataIntegrityViolationException e) {
-                    attempts++;
-                    if (attempts >= 3) {
-                        throw new RuntimeException("Unable to generate unique account number, please try again");
-                    }
+        // Race condition check
+        while (!saved && attempts < 3) {
+            try {
+                wallet.setAccountNumber(generateAccountNumber());
+                walletRepo.save(wallet);
+                saved = true;
+            } catch (DataIntegrityViolationException e) {
+                attempts++;
+
+                if (attempts >= 3) {
+                    throw new RuntimeException(
+                            "Unable to generate unique account number"
+                    );
                 }
             }
-
-            user.setWallet(wallet);
         }
+
+        user.setWallet(wallet);
+        return wallet;
     }
 
     @Transactional
@@ -153,16 +187,8 @@ public class AuthService {
         String token = jwtService.generateToken(principal);
         RefreshResponse refresh = refreshTokenService.createRefreshToken(user);
 
-        Wallet wallet = user.getWallet();
-
         return new AuthResponse(
                 user.getFullName(),
-                new WalletResponse(
-                        wallet.getId(),
-                        wallet.getAccountNumber(),
-                        wallet.getBalance(),
-                        wallet.getCurrency()
-                ),
                 token,
                 refresh.tokenHash()
         );
