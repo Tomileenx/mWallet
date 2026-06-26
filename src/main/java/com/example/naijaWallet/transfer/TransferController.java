@@ -24,15 +24,16 @@ public class TransferController {
     @PostMapping("/transfer")
     public ResponseEntity<TransferResponse> transferMoney(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody TransferRequest request
     ) {
         UserAccount userAccount = userPrincipal.getUser();
-        TransferResponse response = transferService.transferMoney(userAccount, request);
+        TransferResponse response = transferService.transferMoney(userAccount, idempotencyKey, request);
 
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/transfers/{transferId}")
+    @GetMapping("/wallet/transfers/{transferId}")
     public ResponseEntity<TransferResponse> getTransferById(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable UUID transferId
@@ -43,7 +44,7 @@ public class TransferController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/transfers")
+    @GetMapping("/wallet/transfers")
     public ResponseEntity<Page<TransferResponse>> getAllTransfers(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @ParameterObject

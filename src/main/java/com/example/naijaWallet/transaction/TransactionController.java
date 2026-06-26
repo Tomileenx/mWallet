@@ -20,7 +20,7 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @GetMapping("/wallets/{accountNumber}/transactions")
-    public ResponseEntity<Page<TransactionResponse>> getWalletTransactions(
+    public ResponseEntity<Page<TransactionResponse>> getUserTransactions(
             @PathVariable String accountNumber,
             @ParameterObject
             @PageableDefault(
@@ -37,7 +37,7 @@ public class TransactionController {
     }
 
     @GetMapping("/wallets/{accountNumber}/transactions/{reference}")
-    public ResponseEntity<TransactionResponse> getWalletTransaction(
+    public ResponseEntity<TransactionResponse> getUserTransaction(
             @PathVariable String accountNumber,
             @PathVariable String reference
     ) {
@@ -49,7 +49,7 @@ public class TransactionController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/transactions")
+    @GetMapping("/wallets/transactions")
     public ResponseEntity<Page<TransactionResponse>> getAllTransactions(
             @RequestParam(required = false) TransactionType transactionType,
             @RequestParam(required = false) BalanceType balanceType,

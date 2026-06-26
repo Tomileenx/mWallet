@@ -6,6 +6,8 @@ import com.example.naijaWallet.enumTypes.TransactionStatus;
 import com.example.naijaWallet.enumTypes.TransactionType;
 import com.example.naijaWallet.exception.BadRequest;
 import com.example.naijaWallet.exception.NotFound;
+import com.example.naijaWallet.idempotency.IdempotencyRecord;
+import com.example.naijaWallet.idempotency.IdempotencyRecordRepo;
 import com.example.naijaWallet.transaction.Transaction;
 import com.example.naijaWallet.transaction.TransactionRepo;
 import com.example.naijaWallet.transaction.TransactionService;
@@ -15,15 +17,15 @@ import com.example.naijaWallet.userEvent.DebitAlertEvent;
 import com.example.naijaWallet.wallet.Wallet;
 import com.example.naijaWallet.wallet.WalletRepo;
 import com.example.naijaWallet.wallet.WalletService;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,15 +41,33 @@ public class TransferService {
     private final TransferRepo transferRepo;
     private final TransactionRepo transactionRepo;
     private final WalletRepo walletRepo;
+    private final IdempotencyRecordRepo idempotencyKeyRepo;
     private final ApplicationEventPublisher eventPublisher;
 
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @Transactional
     public TransferResponse transferMoney(
             UserAccount userAccount,
+            String idempotencyKey,
             TransferRequest request
     ) {
         if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequest("Transfer amount must be greater than zero");
+        }
+
+        String transferReference  = TransactionService.generateTransactionReference();
+
+        try {
+            IdempotencyRecord key = new IdempotencyRecord();
+            key.setIdempotencyKey(idempotencyKey);
+            key.setUserAccount(userAccount);
+            key.setTransactionReference(transferReference);
+            key.setTransactionType(TransactionType.TRANSFER_OUT);
+            key.setCreatedAt(LocalDateTime.now());
+
+            idempotencyKeyRepo.save(key);
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequest("Duplicate deposit request");
         }
 
         Wallet sender = userAccount.getWallet();
@@ -59,9 +79,8 @@ public class TransferService {
             throw new BadRequest("Cannot transfer to the same wallet");
         }
 
-        String transferReference  = TransactionService.generateTransactionReference();
-
         int debitRows = walletRepo.debitWallet(userAccount, request.amount());
+
         if (debitRows == 0) {
             throw new BadRequest("Insufficient Balance");
         }

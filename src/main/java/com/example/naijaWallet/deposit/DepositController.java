@@ -25,15 +25,16 @@ public class DepositController {
     @PostMapping("/deposit")
     public ResponseEntity<DepositResponse> fund(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody DepositRequest request
     ) {
         UserAccount userAccount = userPrincipal.getUser();
-        DepositResponse response = depositService.fund(userAccount, request);
+        DepositResponse response = depositService.fund(userAccount, idempotencyKey, request);
 
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/deposits/{depositId}")
+    @GetMapping("/wallet/deposits/{depositId}")
     public ResponseEntity<DepositResponse> getDepositById(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable UUID depositId
@@ -44,7 +45,7 @@ public class DepositController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/deposits")
+    @GetMapping("/wallet/deposits")
     public ResponseEntity<Page<DepositResponse>> getAllDeposits(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @ParameterObject

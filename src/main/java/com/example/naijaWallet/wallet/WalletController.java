@@ -26,7 +26,7 @@ public class WalletController {
     private final WalletService walletService;
     private final TransactionService transactionService;
 
-    @GetMapping("/mywallet")
+    @GetMapping("/wallet")
     public ResponseEntity<WalletResponse> getWallet(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
@@ -36,7 +36,7 @@ public class WalletController {
         return  ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @GetMapping("/history")
+    @GetMapping("/wallet/transactions")
     public ResponseEntity<Page<TransactionResponse>> getWalletActivity(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @ParameterObject

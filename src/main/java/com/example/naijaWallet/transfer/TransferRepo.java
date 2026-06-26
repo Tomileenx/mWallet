@@ -33,4 +33,5 @@ public interface TransferRepo extends JpaRepository<Transfer, UUID> {
             Wallet toWallet,
             Pageable pageable
     );
+
 }

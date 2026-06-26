@@ -118,7 +118,6 @@ public class TransactionService {
                 ));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Transactional(readOnly = true)
     public Page<TransactionResponse> getMyWalletActivity(
             UserAccount userAccount,

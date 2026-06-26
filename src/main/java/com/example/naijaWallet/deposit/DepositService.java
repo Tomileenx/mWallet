@@ -5,21 +5,20 @@ import com.example.naijaWallet.enumTypes.TransactionStatus;
 import com.example.naijaWallet.enumTypes.TransactionType;
 import com.example.naijaWallet.exception.BadRequest;
 import com.example.naijaWallet.exception.NotFound;
+import com.example.naijaWallet.idempotency.IdempotencyRecord;
+import com.example.naijaWallet.idempotency.IdempotencyRecordRepo;
 import com.example.naijaWallet.transaction.Transaction;
 import com.example.naijaWallet.transaction.TransactionRepo;
 import com.example.naijaWallet.transaction.TransactionService;
 import com.example.naijaWallet.userAccount.UserAccount;
-import com.example.naijaWallet.userEvent.DebitAlertEvent;
 import com.example.naijaWallet.userEvent.DepositAlertEvent;
 import com.example.naijaWallet.wallet.Wallet;
-import com.example.naijaWallet.wallet.WalletMapper;
 import com.example.naijaWallet.wallet.WalletRepo;
 import com.example.naijaWallet.wallet.WalletService;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,14 +37,29 @@ public class DepositService {
     private final DepositRepo depositRepo;
     private final TransactionRepo transactionRepo;
     private final WalletRepo walletRepo;
+    private final IdempotencyRecordRepo idempotencyKeyRepo;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public DepositResponse fund(UserAccount userAccount, DepositRequest request) {
+    public DepositResponse fund(UserAccount userAccount, String idempotencyKey, DepositRequest request) {
         if (request.amount() == null || request.amount().compareTo(BigDecimal.TEN) < 0) {
             throw new BadRequest("Minimum deposit amount is 10");
         }
 
+        String depositReference  = TransactionService.generateTransactionReference();
+
+        try {
+            IdempotencyRecord key = new IdempotencyRecord();
+            key.setIdempotencyKey(idempotencyKey);
+            key.setUserAccount(userAccount);
+            key.setTransactionReference(depositReference);
+            key.setTransactionType(TransactionType.DEPOSIT);
+            key.setCreatedAt(LocalDateTime.now());
+
+            idempotencyKeyRepo.save(key);
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequest("Duplicate deposit request");
+        }
         int updatedRows = walletRepo.walletDeposit(userAccount, request.amount());
         log.info(" Initiating deposit of {} to {}",
                 request.amount(),
@@ -60,8 +74,6 @@ public class DepositService {
         Wallet wallet = walletRepo.findById(
                 userAccount.getWallet().getId()
         ).orElseThrow(() -> new NotFound("Wallet not found"));
-
-        String depositReference  = TransactionService.generateTransactionReference();
 
         Deposit deposit = new Deposit();
         deposit.setToWallet(userAccount.getWallet());
@@ -80,10 +92,6 @@ public class DepositService {
         transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setCreatedAt(LocalDateTime.now());
         transaction.setWallet(wallet);
-
-//        Wallet wallet =
-//                walletRepo.findByUserAccount(userAccount)
-//                        .orElseThrow();
 
         transactionRepo.save(transaction);
 
@@ -107,6 +115,7 @@ public class DepositService {
                 depositReference,
                 deposit.getAmount(),
                 deposit.getTransactionStatus(),
+
                 deposit.getCreatedAt()
         );
     }

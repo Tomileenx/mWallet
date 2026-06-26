@@ -6,6 +6,7 @@ import com.example.naijaWallet.userAccount.UserAccount;
 import com.example.naijaWallet.userAccount.UserRepo;
 import com.example.naijaWallet.userEvent.UserCreatedEvent;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class VerificationService {
     private final UserRepo repo;
@@ -56,6 +58,7 @@ public class VerificationService {
 
         verificationTokenRepo.save(token);
 
+        log.info("Resending verification email");
         eventPublisher.publishEvent(
                 new UserCreatedEvent(
                         user.getEmail(),
