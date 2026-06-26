@@ -68,7 +68,7 @@ public class EmailService {
 
         String body =
                 """
-                Welcome to NaijaWallet.
+                Welcome to mWallet.
 
                 Click the link below to verify your email:
 
@@ -102,7 +102,7 @@ public class EmailService {
                      \s
                       Welcome aboard!\s
                      \s
-                      NaijaWallet Team
+                      mWallet Team
                      \s""".formatted(accountNumber, balance, currency);
 
         sendEmail(email, subject, body);
@@ -120,7 +120,7 @@ public class EmailService {
             BigDecimal balance
     ) {
 
-        String subject = "NaijaWallet Deposit Alert";
+        String subject = "mWallet Deposit Alert";
 
         String body = """
             Dear Customer,
@@ -140,9 +140,9 @@ public class EmailService {
             ------------------------------
             Balance: %s %s
 
-            Thank you for using NaijaWallet.
+            Thank you for using mWallet.
 
-            NaijaWallet Team
+            mWallet Team
             """
                 .formatted(
                         transactionId,
@@ -170,7 +170,7 @@ public class EmailService {
             BigDecimal balance
     ) {
 
-        String subject = "NaijaWallet Credit Alert";
+        String subject = "mWallet Credit Alert";
 
         String body = """
             Dear Customer,
@@ -189,9 +189,9 @@ public class EmailService {
             ------------------------------
             Balance: %s %s
 
-            Thank you for using NaijaWallet.
+            Thank you for using mWallet.
 
-            NaijaWallet Team
+            mWallet Team
             """
                 .formatted(
                         transactionId,
@@ -220,7 +220,7 @@ public class EmailService {
             BigDecimal balance
     ) {
 
-        String subject = "NaijaWallet Debit Alert";
+        String subject = "mWallet Debit Alert";
 
         String body = """
             Dear Customer,
@@ -241,9 +241,9 @@ public class EmailService {
             ------------------------------
             Balance: %s %s
 
-            Thank you for using NaijaWallet.
+            Thank you for using mWallet.
 
-            NaijaWallet Team
+            mWallet Team
             """
                 .formatted(
                         transactionId,
