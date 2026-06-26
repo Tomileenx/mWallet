@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/naijaWallet/register",
                                 "/naijaWallet/verify-email",
+                                "/naijaWallet/resend-verification",
                                 "/naijaWallet/login",
                                 "/naijaWallet/refreshToken",
                                 "/naijaWallet/logout",

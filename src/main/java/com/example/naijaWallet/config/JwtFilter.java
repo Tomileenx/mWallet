@@ -78,6 +78,8 @@ public class JwtFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
 
         return path.startsWith("/naijaWallet/register")
+                || path.startsWith("/naijaWallet/verify-email")
+                || path.startsWith("/naijaWallet/resend-verification")
                 || path.startsWith("/naijaWallet/login")
                 || path.startsWith("/naijaWallet/refreshToken")
                 || path.startsWith("/naijaWallet/logout")
