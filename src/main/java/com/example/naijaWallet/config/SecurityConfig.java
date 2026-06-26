@@ -15,6 +15,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -37,7 +42,9 @@ public class SecurityConfig {
                                 "/naijaWallet/verify-email",
                                 "/naijaWallet/login",
                                 "/naijaWallet/refreshToken",
-                                "/naijaWallet/logout"
+                                "/naijaWallet/logout",
+                                "/v3/api-docs/**",
+                                "/scalar.html"
                         )
                         .permitAll()
                         .requestMatchers("/hms/admin/**").hasAuthority("ADMIN")
@@ -56,5 +63,39 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration config = new CorsConfiguration();
+
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:8080"
+        ));
+
+        config.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+        ));
+
+        config.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-Requested-With"
+        ));
+
+        config.setExposedHeaders(List.of(
+                "Authorization"
+        ));
+
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
     }
 }
