@@ -44,7 +44,8 @@ public class SecurityConfig {
                                 "/naijaWallet/refreshToken",
                                 "/naijaWallet/logout",
                                 "/v3/api-docs/**",
-                                "/scalar.html"
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
                         )
                         .permitAll()
                         .requestMatchers("/hms/admin/**").hasAuthority("ADMIN")

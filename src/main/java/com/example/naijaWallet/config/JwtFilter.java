@@ -80,6 +80,9 @@ public class JwtFilter extends OncePerRequestFilter {
         return path.startsWith("/naijaWallet/register")
                 || path.startsWith("/naijaWallet/login")
                 || path.startsWith("/naijaWallet/refreshToken")
-                || path.startsWith("/naijaWallet/logout");
+                || path.startsWith("/naijaWallet/logout")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/scalar");
     }
 }
