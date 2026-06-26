@@ -2,6 +2,7 @@ package com.example.naijaWallet.deposit;
 
 import com.example.naijaWallet.config.UserPrincipal;
 import com.example.naijaWallet.userAccount.UserAccount;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/naijaWallet")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class DepositController {
 
     private final DepositService depositService;

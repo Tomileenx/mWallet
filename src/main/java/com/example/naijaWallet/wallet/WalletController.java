@@ -6,6 +6,7 @@ import com.example.naijaWallet.transaction.TransactionResponse;
 import com.example.naijaWallet.transaction.TransactionService;
 import com.example.naijaWallet.userAccount.UserAccount;
 import com.example.naijaWallet.config.UserPrincipal;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/naijaWallet")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class WalletController {
     private final WalletService walletService;
     private final TransactionService transactionService;

@@ -50,7 +50,7 @@ public class AuthService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public UserResponse register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
         if (repo.existsByEmailIgnoreCase(request.email())) {
             throw new AlreadyExists(request.email() + " already exist");
         }
@@ -76,7 +76,7 @@ public class AuthService {
 
         eventPublisher.publishEvent(new UserCreatedEvent(user.getEmail(), verificationToken));
 
-        return new UserResponse(
+        return new RegisterResponse(
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),

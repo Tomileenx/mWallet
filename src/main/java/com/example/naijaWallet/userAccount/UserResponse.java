@@ -11,7 +11,6 @@ public record UserResponse(
         String fullName,
         String email,
         String passwordHash,
-        LocalDateTime createdAt,
-        String message
+        LocalDateTime createdAt
 ) {
 }

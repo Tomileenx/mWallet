@@ -18,10 +18,10 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(
+    public ResponseEntity<RegisterResponse> register(
             @Valid  @RequestBody RegisterRequest request
     ) {
-        UserResponse response = authService.register(request);
+        RegisterResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
