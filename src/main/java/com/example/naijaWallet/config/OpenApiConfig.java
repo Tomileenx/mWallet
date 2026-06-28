@@ -38,8 +38,7 @@ public class OpenApiConfig {
                         .addResponses("403", errorResponse("Forbidden"))
                         .addResponses("503", errorResponse("Service Unavailable"))
                         .addResponses("500", errorResponse("Internal Server Error"))
-                )
-                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
+                );
     }
 
 
