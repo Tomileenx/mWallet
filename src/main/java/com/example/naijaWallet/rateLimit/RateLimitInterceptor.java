@@ -1,5 +1,7 @@
 package com.example.naijaWallet.rateLimit;
 
+import com.example.naijaWallet.exception.ErrorResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,6 +11,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+
+import java.time.Instant;
 
 @Component
 @RequiredArgsConstructor
@@ -29,10 +33,18 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
         if (!bucket.tryConsume(1)) {
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
 
-            response.getWriter().write(
-                    "Too many requests. Please try again later."
+            ErrorResponse error = new ErrorResponse(
+                    "Too many requests. Please try again later.",
+                    "TOO_MANY_REQUESTS",
+                    Instant.now()
             );
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(response.getWriter(), error);
+
 
             return false;
         }
@@ -67,6 +79,18 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     ) {
         String uri = request.getRequestURI();
 
+        if (uri.startsWith("/naijaWallet/wallet/deposits")) {
+            return RateLimitOperation.WALLET_DEPOSITS;
+        }
+
+        if (uri.startsWith("/naijaWallet/wallet/transfers")) {
+            return RateLimitOperation.WALLET_TRANSFERS;
+        }
+
+        if (uri.startsWith("/naijaWallet/wallet/transactions")) {
+            return RateLimitOperation.WALLET_TRANSACTIONS;
+        }
+
         return switch (uri) {
 
             case "/naijaWallet/register" ->
@@ -89,15 +113,6 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
             case "/naijaWallet/wallet" ->
                     RateLimitOperation.WALLET;
-
-            case "/naijaWallet/wallet/transactions" ->
-                    RateLimitOperation.WALLET_TRANSACTIONS;
-
-            case "/naijaWallet/wallet/deposits" ->
-                    RateLimitOperation.WALLET_DEPOSITS;
-
-            case "/naijaWallet/wallet/transfers" ->
-                    RateLimitOperation.WALLET_TRANSFERS;
 
             default ->
                     RateLimitOperation.DEFAULT;

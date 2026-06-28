@@ -1,5 +1,8 @@
 package com.example.naijaWallet.refreshToken;
 
+import com.example.naijaWallet.exception.SessionExpired;
+import com.example.naijaWallet.exception.TokenExpired;
+import com.example.naijaWallet.exception.Unauthorized;
 import com.example.naijaWallet.userAccount.UserAccount;
 import com.example.naijaWallet.userAccount.UserRepo;
 import com.example.naijaWallet.config.JWTService;
@@ -38,16 +41,16 @@ public class RefreshTokenService {
     @Transactional
     public VerifyRefreshResponse verifyToken(RefreshRequest request) {
         RefreshToken rToken = refreshTokenRepo.findByTokenHash(request.refreshToken())
-                .orElseThrow(() -> new RuntimeException("Invalid Refresh Token"));
+                .orElseThrow(() -> new Unauthorized("Invalid Refresh Token"));
 
         if (rToken.getExpiryDate().isBefore(Instant.now())) {
             refreshTokenRepo.delete(rToken);
-            throw new RuntimeException("Refresh token expired");
+            throw new TokenExpired("Refresh token expired");
         }
 
         if (rToken.getLastActivity().plusMillis(IN_ACTIVITY_LIMIT).isBefore(Instant.now())) {
             refreshTokenRepo.delete(rToken);
-            throw new RuntimeException("Session expired due to inactivity");
+            throw new SessionExpired("Session expired due to inactivity");
         }
 
         String newAccessToken =

@@ -2,6 +2,9 @@ package com.example.naijaWallet.deposit;
 
 import com.example.naijaWallet.config.UserPrincipal;
 import com.example.naijaWallet.userAccount.UserAccount;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,13 @@ public class DepositController {
 
     private final DepositService depositService;
 
+    @Operation(summary = "mWallet Deposit")
+    @ApiResponses({
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/400"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/404"),
+            @ApiResponse(responseCode = "429", ref = "#/components/responses/429"),
+            @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    })
     @PostMapping("/deposit")
     public ResponseEntity<DepositResponse> fund(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -36,6 +46,12 @@ public class DepositController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "My mWallet Deposit")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/404"),
+            @ApiResponse(responseCode = "429", ref = "#/components/responses/429"),
+            @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    })
     @GetMapping("/wallet/deposits/{depositId}")
     public ResponseEntity<DepositResponse> getDepositById(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -47,6 +63,11 @@ public class DepositController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "My mWallet Deposits")
+    @ApiResponses({
+            @ApiResponse(responseCode = "429", ref = "#/components/responses/429"),
+            @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    })
     @GetMapping("/wallet/deposits")
     public ResponseEntity<Page<DepositResponse>> getAllDeposits(
             @AuthenticationPrincipal UserPrincipal userPrincipal,

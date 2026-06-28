@@ -3,6 +3,9 @@ package com.example.naijaWallet.transfer;
 import com.example.naijaWallet.config.UserPrincipal;
 
 import com.example.naijaWallet.userAccount.UserAccount;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,13 @@ import java.util.UUID;
 public class TransferController {
     private final TransferService transferService;
 
+    @Operation(summary = "mWallet Transfer")
+    @ApiResponses({
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/400"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/404"),
+            @ApiResponse(responseCode = "429", ref = "#/components/responses/429"),
+            @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    })
     @PostMapping("/transfer")
     public ResponseEntity<TransferResponse> transferMoney(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -35,6 +45,12 @@ public class TransferController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "My mWallet Transfer")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/404"),
+            @ApiResponse(responseCode = "429", ref = "#/components/responses/429"),
+            @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    })
     @GetMapping("/wallet/transfers/{transferId}")
     public ResponseEntity<TransferResponse> getTransferById(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -46,6 +62,11 @@ public class TransferController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "My mWallet Transfers")
+    @ApiResponses({
+            @ApiResponse(responseCode = "429", ref = "#/components/responses/429"),
+            @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    })
     @GetMapping("/wallet/transfers")
     public ResponseEntity<Page<TransferResponse>> getAllTransfers(
             @AuthenticationPrincipal UserPrincipal userPrincipal,

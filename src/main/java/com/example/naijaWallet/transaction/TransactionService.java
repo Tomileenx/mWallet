@@ -119,7 +119,7 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TransactionResponse> getMyWalletActivity(
+    public Page<TransactionResponse> getMyWalletActivities(
             UserAccount userAccount,
             Pageable pageable
     ) {
@@ -142,6 +142,26 @@ public class TransactionService {
                         transaction.getCreatedAt()
                 ));
 
+    }
+
+    public TransactionResponse getMyWalletActivity(
+            UserAccount userAccount,
+            UUID transactionId
+    ) {
+        Wallet wallet = userAccount.getWallet();
+
+        Transaction transaction = transactionRepo.findByIdAndWallet(transactionId, wallet)
+                .orElseThrow(() -> new NotFound("Transaction not found"));
+
+        return new TransactionResponse(
+                transaction.getId(),
+                transaction.getWallet().getId(),
+                transaction.getTransactionType(),
+                transaction.getBalanceType(),
+                transaction.getAmount(),
+                transaction.getTransactionReference(),
+                transaction.getCreatedAt()
+        );
     }
 
     public static String generateTransactionReference() {

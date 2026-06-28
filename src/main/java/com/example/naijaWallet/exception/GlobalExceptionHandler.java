@@ -53,6 +53,19 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(Forbidden.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(
+            Forbidden ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(
+                        ex.getMessage(),
+                        "FORBIDDEN",
+                        Instant.now()
+                ));
+    }
+
     @ExceptionHandler(BadRequest.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(
             BadRequest ex
@@ -96,7 +109,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponse(
-                        "Invalid email or password",
+                        ex.getMessage(),
                         "INVALID_CREDENTIALS",
                         Instant.now()
                 ));
@@ -128,13 +141,48 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(AccountGeneration.class)
+    public ResponseEntity<ErrorResponse> handleAccountGen(AccountGeneration ex) {
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ErrorResponse(
+                        ex.getMessage(),
+                        "ACCOUNT_GENERATION_FAILED",
+                        Instant.now()
+                ));
+    }
+
+    @ExceptionHandler({
+            TokenExpired.class,
+            SessionExpired.class
+    })
+    public ResponseEntity<ErrorResponse> handleAuthExpiry(RuntimeException ex) {
+
+        String code;
+
+        if (ex instanceof TokenExpired) {
+            code = "TOKEN_EXPIRED";
+        } else {
+            code = "SESSION_EXPIRED";
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        ex.getMessage(),
+                        code,
+                        Instant.now()
+                ));
+    }
+
+    @ExceptionHandler
     public ResponseEntity<ErrorResponse> handleGenerics(
             Exception ex
     ) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse(
-                        "Something went wrong",
+                        ex.getMessage(),
                         "INTERNAL_ERROR",
                         Instant.now()
                 ));

@@ -2,9 +2,7 @@ package com.example.naijaWallet.auth;
 
 import com.example.naijaWallet.config.JWTService;
 import com.example.naijaWallet.config.UserPrincipal;
-import com.example.naijaWallet.exception.AlreadyExists;
-import com.example.naijaWallet.exception.BadRequest;
-import com.example.naijaWallet.exception.NotFound;
+import com.example.naijaWallet.exception.*;
 import com.example.naijaWallet.refreshToken.RefreshResponse;
 import com.example.naijaWallet.refreshToken.RefreshTokenService;
 import com.example.naijaWallet.roles.Role;
@@ -135,7 +133,7 @@ public class AuthService {
 
     public Wallet createWallet(UserAccount user) {
         if (user.getRole() != Role.USER) {
-            throw new IllegalStateException("Only users can have wallets");
+            throw new Forbidden("Only users can have wallets");
         }
 
         Wallet wallet = new Wallet();
@@ -158,7 +156,7 @@ public class AuthService {
                 attempts++;
 
                 if (attempts >= 3) {
-                    throw new RuntimeException(
+                    throw new AccountGeneration(
                             "Unable to generate unique account number"
                     );
                 }

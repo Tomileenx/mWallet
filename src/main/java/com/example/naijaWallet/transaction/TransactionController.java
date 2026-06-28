@@ -6,6 +6,9 @@ import com.example.naijaWallet.enumTypes.TransactionType;
 import com.example.naijaWallet.userAccount.UserAccount;
 import com.example.naijaWallet.userAccount.UserResponse;
 import com.example.naijaWallet.userAccount.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -27,6 +30,11 @@ public class TransactionController {
     private final TransactionService transactionService;
     private final UserService userService;
 
+    @Operation(summary = "All mWallet User Transactions")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/404"),
+            @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    })
     @GetMapping("/wallets/{accountNumber}/transactions")
     public ResponseEntity<Page<TransactionResponse>> getUserTransactions(
             @PathVariable String accountNumber,
@@ -44,6 +52,11 @@ public class TransactionController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "mWallet User Transaction")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/404"),
+            @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    })
     @GetMapping("/wallets/{accountNumber}/transactions/{reference}")
     public ResponseEntity<TransactionResponse> getUserTransaction(
             @PathVariable String accountNumber,
@@ -57,7 +70,9 @@ public class TransactionController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/wallets/transactions")
+    @Operation(summary = "All mWallet Transactions")
+    @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    @GetMapping("/transactions")
     public ResponseEntity<Page<TransactionResponse>> getAllTransactions(
             @RequestParam(required = false) TransactionType transactionType,
             @RequestParam(required = false) BalanceType balanceType,
@@ -75,6 +90,11 @@ public class TransactionController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "mWallet User")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/404"),
+            @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
+    })
     @GetMapping("/account/{userId}")
     public ResponseEntity<UserResponse> getUser(
             @PathVariable UUID userId
@@ -84,8 +104,10 @@ public class TransactionController {
         return  ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Operation(summary = "All mWallet Users")
+    @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
     @GetMapping("/account/users")
-    public ResponseEntity<Page<UserResponse>> getAllUses(
+    public ResponseEntity<Page<UserResponse>> getAllUsers(
             @ParameterObject
             @PageableDefault(
                     page = 0

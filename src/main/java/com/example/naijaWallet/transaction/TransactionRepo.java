@@ -16,6 +16,9 @@ public interface TransactionRepo extends JpaRepository<Transaction, UUID> {
     // All transactions for a wallet
     Page<Transaction> findByWallet(Wallet wallet, Pageable pageable);
 
+    // Wallet transaction
+    Optional<Transaction> findByIdAndWallet(UUID transactionId, Wallet wallet);
+
     // TransactionType and BalanceType
     Page<Transaction> findByTransactionTypeAndBalanceType(
             TransactionType transactionType,

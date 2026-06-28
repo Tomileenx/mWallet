@@ -1,6 +1,9 @@
 package com.example.naijaWallet.userAccount;
 
 import com.example.naijaWallet.config.UserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -23,6 +26,8 @@ import java.util.UUID;
 public class UserController {
     private final UserService userService;
 
+    @Operation(summary = "My mWallet Account")
+    @ApiResponse(responseCode = "500", ref = "#/components/responses/500")
     @GetMapping("/account")
     public ResponseEntity<UserResponse> getMyAccount(
             @AuthenticationPrincipal UserPrincipal userPrincipal

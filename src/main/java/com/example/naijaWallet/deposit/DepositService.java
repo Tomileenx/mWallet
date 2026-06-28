@@ -71,9 +71,8 @@ public class DepositService {
         }
 
         //  ensure correct balance in memory
-        Wallet wallet = walletRepo.findById(
-                userAccount.getWallet().getId()
-        ).orElseThrow(() -> new NotFound("Wallet not found"));
+        Wallet wallet = userAccount.getWallet();
+        BigDecimal walletBalance = walletRepo.findBalanceById(wallet.getId());
 
         Deposit deposit = new Deposit();
         deposit.setToWallet(userAccount.getWallet());
@@ -106,7 +105,7 @@ public class DepositService {
                 transaction.getTransactionReference(),
                 transaction.getStatus(),
                 transaction.getCreatedAt(),
-                wallet.getBalance()
+                walletBalance
         ));
 
         return new DepositResponse(
