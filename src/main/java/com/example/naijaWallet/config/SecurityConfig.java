@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         )
                         .permitAll()
-                        .requestMatchers("/naijaWallet/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/naijaWallet/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
