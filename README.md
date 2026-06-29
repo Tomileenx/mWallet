@@ -122,6 +122,7 @@ The application automatically sends:
 ### Reliability Features
 
 * Flyway database migrations
+* Cron job verification token delete
 * Optimistic locking
 * Idempotent transaction processing
 * Duplicate request prevention
