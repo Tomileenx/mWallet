@@ -1,4 +1,5 @@
 mWallet
+
 A secure and modern digital wallet REST API built with Spring Boot that enables users to create accounts, verify their email, manage wallets, deposit funds, transfer money, and track transactions.
 The project follows production-ready practices including JWT authentication, role-based authorization, optimistic locking, Flyway database migrations, idempotent transaction processing, rate limiting, and email notifications.
 
@@ -240,7 +241,7 @@ Required environment variables:
 
 ## License
 
-This project is .
+This project is for a portfolio purpose.
 
 ---
 
