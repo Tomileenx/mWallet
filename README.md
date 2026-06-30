@@ -30,7 +30,7 @@ The project follows production-ready practices including JWT authentication, rol
 
 ### Deposits
 
-* Atomicc deposit operation
+* Atomic deposit operation
 * Automatic balance update
 * Deposit transaction history
 * Deposit email notifications
